@@ -18,11 +18,11 @@ if (process.env.NODE_ENV === "development") {
 
 app.post("/url/extract", async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { url, parserType } = req.body;
+        const { url, parserId } = req.body;
         const { contentType } = req.query;
 
         if (contentType === "html") {
-            const parser = getHTMLParser(parserType);
+            const parser = getHTMLParser(parserId);
             const parsedContent: any = await parser.parseHTML(url);
 
             res.send({
