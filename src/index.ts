@@ -4,6 +4,7 @@ import errorhandler from "errorhandler";
 import express, { Express, NextFunction, Request, Response } from "express";
 import morgan from "morgan";
 import { getHTMLParser, getHTMLParserIds } from "./parsers/html";
+import { getTextParser } from "./parsers/text";
 
 const app: Express = express();
 const port: number = 5000;
@@ -21,15 +22,23 @@ app.post("/url/extract", async (req: Request, res: Response, next: NextFunction)
         const { url, parserId } = req.body;
         const { contentType } = req.query;
 
-        if (contentType === "html") {
-            const parser = getHTMLParser(parserId);
-            const parsedContent: any = await parser.parseHTML(url);
+        switch (contentType) {
+            case "html":
+                const htmlResult: any = await getHTMLParser(parserId).parseHTML(url);
 
-            res.send({
-                html: parsedContent.content
-            });
-        } else {
-            throw new Error("Unsupported format");
+                res.send({
+                    html: htmlResult.content
+                });
+                return;
+            case "text":
+                const textResult: any = await getTextParser(parserId).parseText(url);
+
+                res.send({
+                    text: textResult.content
+                });
+                return;
+            default:
+                throw new Error("Unsupported format");
         }
 
     } catch (err) {

@@ -1,5 +1,5 @@
 import { extract } from "article-parser";
-import { IHtmlParser } from "./htmlParser";
+import { IHtmlParser } from "./IhtmlParser";
 
 export class HtmlParser2 implements IHtmlParser {
   public static parserId = "2";

@@ -1,4 +1,4 @@
-import { IParser } from "../baseParser";
+import { IParser } from "../IParser";
 
 export interface IHtmlParser extends IParser {
   contentType: "html";

@@ -1,5 +1,5 @@
 import Mercury from "@postlight/mercury-parser";
-import { IHtmlParser } from "./htmlParser";
+import { IHtmlParser } from "./IhtmlParser";
 
 export class HtmlParser1 implements IHtmlParser {
   public static parserId = "1";

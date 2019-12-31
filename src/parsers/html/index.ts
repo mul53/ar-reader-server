@@ -1,7 +1,7 @@
-import { IHtmlParser } from "./htmlParser";
 import { HtmlParser1 } from "./htmlParser1";
 import { HtmlParser2 } from "./htmlParser2";
 import { HtmlParser3 } from "./htmlParser3";
+import { IHtmlParser } from "./IhtmlParser";
 
 export function getHTMLParser(parserId: string): IHtmlParser {
   switch (parserId) {
