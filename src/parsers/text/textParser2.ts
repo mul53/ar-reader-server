@@ -8,7 +8,13 @@ export class TextParser2 implements ITextParser {
 
   public async parseText(url: string): Promise<object> {
     const { body: htmlString } = await getRequest(url);
-    const parsedContent = htmlToText.fromString(htmlString);
+    const parsedContent = htmlToText.fromString(htmlString, {
+      ignoreHref: true,
+      noLinkBrackets: true,
+      tables: true,
+      uppercaseHeadings: true,
+      wordwrap: 100,
+    });
     const result: any = { content: parsedContent };
     return result;
   }

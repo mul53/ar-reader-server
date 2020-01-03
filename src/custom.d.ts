@@ -7,3 +7,4 @@ declare module "cors";
 declare module "errorhandler";
 declare module "jsdom";
 declare module "html-to-text";
+declare module "dotenv";

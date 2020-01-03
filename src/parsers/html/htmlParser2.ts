@@ -1,4 +1,6 @@
-import { extract } from "article-parser";
+import { JSDOM } from "jsdom";
+import Readability from "readability";
+import { getRequest } from "../../util";
 import { IHtmlParser } from "./IhtmlParser";
 
 export class HtmlParser2 implements IHtmlParser {
@@ -6,8 +8,10 @@ export class HtmlParser2 implements IHtmlParser {
   public contentType: "html";
 
   public async parseHTML(url: string): Promise<object> {
-    const parsedContent: any = await extract(url);
-    const result: any = { content: parsedContent.content };
+    const { body: htmlString } = await getRequest(url);
+    const doc = new JSDOM(htmlString, { url });
+    const { content } = new Readability(doc.window.document).parse();
+    const result: any = { content };
     return result;
   }
 }
