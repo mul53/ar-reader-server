@@ -76,7 +76,7 @@ app.post("/url/extract/preview", async (req: Request, res: Response, next: NextF
             const html: any = await getHTMLParser(parserId).parseHTML(rawHtml, url);
             data.content = html.content;
         } else if (contentType === "text") {
-            const text: any = await getTextParser(parserId).parseText(rawHtml);
+            const text: any = await getTextParser(parserId).parseText(rawHtml, url);
             data.content = text.content;
         }
 
@@ -104,7 +104,7 @@ app.post("/url/extract/submit", async (req: Request, res: Response, next: NextFu
         const html: any = await getHTMLParser(parserId).parseHTML(rawHtml, url);
 
         const textParserId = contentType === "html" ? "1" : parserId;
-        const text: any = await getTextParser(textParserId).parseText(rawHtml);
+        const text: any = await getTextParser(textParserId).parseText(rawHtml, url);
 
         if (contentType === "html") {
             data.content = html.content;
