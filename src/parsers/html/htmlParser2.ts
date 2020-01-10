@@ -7,11 +7,13 @@ export class HtmlParser2 implements IHtmlParser {
   public static parserId = "2";
   public contentType: "html";
 
-  public async parseHTML(url: string): Promise<object> {
-    const { body: htmlString } = await getRequest(url);
-    const doc = new JSDOM(htmlString, { url });
-    const { content } = new Readability(doc.window.document).parse();
-    const result: any = { content };
+  public async parseHTML(html: string, url: string): Promise<object> {
+    const doc = new JSDOM(html, { url });
+    const { content, title } = new Readability(doc.window.document).parse();
+    const result = {
+      content,
+      title
+    };
     return result;
   }
 }

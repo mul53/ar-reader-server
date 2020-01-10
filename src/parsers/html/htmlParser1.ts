@@ -5,9 +5,12 @@ export class HtmlParser1 implements IHtmlParser {
   public static parserId = "1";
   public contentType: "html";
 
-  public async parseHTML(url: string): Promise<object> {
-    const parsedContent: any = await Mercury.parse(url);
-    const result: any = { content: parsedContent.content };
+  public async parseHTML(html: string, url: string): Promise<object> {
+    const { title, content } = await Mercury.parse(url, { html });
+    const result = {
+      content,
+      title,
+    };
     return result;
   }
 }

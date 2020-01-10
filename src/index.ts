@@ -9,6 +9,7 @@ import path from "path";
 import "./env";
 import { getHTMLParser, getHTMLParserIds } from "./parsers/html";
 import { getTextParser } from "./parsers/text";
+import { contentTypeSupported, extractMeta, generateMetatags, getMetatags, getRequest, getTitle, getTitleTag } from "./util";
 
 if (!process.env.WALLET_FILE) {
     console.log("⛔ ERROR: Please specify a wallet file to load using argument " +
@@ -61,25 +62,25 @@ app.post("/url/extract/preview", async (req: Request, res: Response, next: NextF
         const { url, parserId } = req.body;
         const { contentType } = req.query;
 
-        switch (contentType) {
-            case "html":
-                const htmlResult: any = await getHTMLParser(parserId).parseHTML(url);
-
-                res.send({
-                    html: htmlResult.content
-                });
-                return;
-            case "text":
-                const textResult: any = await getTextParser(parserId).parseText(url);
-
-                res.send({
-                    text: textResult.content
-                });
-                return;
-            default:
-                throw new Error("Unsupported format");
+        if (!contentTypeSupported(contentType)) {
+            return res.send({
+                data: "Content type not supported."
+            });
         }
 
+        const data: any = {};
+
+        const { body: rawHtml } = await getRequest(url);
+
+        if (contentType === "html") {
+            const html: any = await getHTMLParser(parserId).parseHTML(rawHtml, url);
+            data.content = html.content;
+        } else if (contentType === "text") {
+            const text: any = await getTextParser(parserId).parseText(rawHtml);
+            data.content = text.content;
+        }
+
+        res.send(data);
     } catch (err) {
         next(err);
     }
@@ -90,28 +91,44 @@ app.post("/url/extract/submit", async (req: Request, res: Response, next: NextFu
         const { url, parserId } = req.body;
         const { contentType } = req.query;
 
-        switch (contentType) {
-            case "html":
-                const data: any = await getHTMLParser(parserId).parseHTML(url);
-
-                const tx = await arweave.createTransaction({ data: data.content }, wallet);
-                tx.addTag("content", "article");
-
-                await dispatchTx(tx);
-
-                res.send({
-                    txId: tx.id
-                });
-                return;
-            case "text":
-                const textResult: any = await getTextParser(parserId).parseText(url);
-
-                res.send({
-                    text: textResult.content
-                });
-            default:
-                throw new Error("Unsupported format");
+        if (!contentTypeSupported(contentType)) {
+            return res.send({
+                data: "Content type not supported."
+            });
         }
+
+        const data: any = {};
+
+        const { body: rawHtml } = await getRequest(url);
+
+        const html: any = await getHTMLParser(parserId).parseHTML(rawHtml, url);
+
+        const textParserId = contentType === "html" ? "1" : parserId;
+        const text: any = await getTextParser(textParserId).parseText(rawHtml);
+
+        if (contentType === "html") {
+            data.content = html.content;
+        } else if (contentType === "text") {
+            data.content = text.content;
+        }
+
+        const metadata = await extractMeta(rawHtml, url);
+        data.title = metadata.title ? metadata.title : await getTitle(rawHtml);
+        data.metaTags = generateMetatags(metadata);
+        data.titleTag = getTitleTag(rawHtml);
+
+        const finalContent = data.titleTag + data.metaTags + data.content;
+        const tx = await arweave.createTransaction({ data: finalContent }, wallet);
+
+        if (data.title) { tx.addTag("Title", data.title); }
+
+        tx.addTag("Original URL", url);
+
+        await dispatchTx(tx);
+
+        res.send({
+            txId: tx.id
+        });
 
     } catch (err) {
         next(err);
