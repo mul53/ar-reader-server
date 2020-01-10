@@ -9,7 +9,15 @@ import path from "path";
 import "./env";
 import { getHTMLParser, getHTMLParserIds } from "./parsers/html";
 import { getTextParser } from "./parsers/text";
-import { contentTypeSupported, extractMeta, generateMetatags, getMetatags, getRequest, getTitle, getTitleTag } from "./util";
+import {
+    contentTypeSupported,
+    extractMeta,
+    generateMetatags,
+    getRequest,
+    getTitle,
+    getTitleTag,
+    sentimentAnalysis
+} from "./util";
 
 if (!process.env.WALLET_FILE) {
     console.log("⛔ ERROR: Please specify a wallet file to load using argument " +
@@ -118,11 +126,14 @@ app.post("/url/extract/submit", async (req: Request, res: Response, next: NextFu
         data.titleTag = getTitleTag(rawHtml);
 
         const finalContent = data.titleTag + data.metaTags + data.content;
+        const sentimentScore = sentimentAnalysis(text.content);
+
         const tx = await arweave.createTransaction({ data: finalContent }, wallet);
 
         if (data.title) { tx.addTag("Title", data.title); }
 
         tx.addTag("Original URL", url);
+        tx.addTag("Sentiment Score", sentimentScore);
 
         await dispatchTx(tx);
 

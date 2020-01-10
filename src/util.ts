@@ -7,6 +7,7 @@ import MetascraperPublisher from "metascraper-publisher";
 import MetascraperTitle from "metascraper-title";
 import Readability from "readability";
 import r from "request";
+import Sentiment from "sentiment";
 import { promisify } from "util";
 
 const metascraper = Metascraper([
@@ -100,4 +101,10 @@ export const getDescription = (html: string, url: string) => {
   const doc = new JSDOM(html, { url });
   const { excerpt } = new Readability(doc.window.document).parse();
   return excerpt;
+};
+
+export const sentimentAnalysis = (text: string) => {
+  const sentiment = new Sentiment();
+  const { score } = sentiment.analyze(text);
+  return score;
 };

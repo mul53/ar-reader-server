@@ -14,3 +14,4 @@ declare module "metascraper-description";
 declare module "metascraper-image";
 declare module "metascraper-publisher";
 declare module "metascraper-title";
+declare module "sentiment";
