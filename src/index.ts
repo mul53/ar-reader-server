@@ -1,12 +1,10 @@
-import Arweave from "arweave/node";
+import "./env";
 import bodyParser from "body-parser";
 import cors from "cors";
 import errorhandler from "errorhandler";
 import express, { Express, NextFunction, Request, Response } from "express";
-import fs from "fs";
 import morgan from "morgan";
-import path from "path";
-import "./env";
+import ar from "./ar";
 import { getHTMLParser, getHTMLParserIds } from "./parsers/html";
 import { getTextParser } from "./parsers/text";
 import {
@@ -16,43 +14,12 @@ import {
     getRequest,
     getTitle,
     getTitleTag,
-    sentimentAnalysis
+    replaceImages,
+    sentimentAnalysis,
+    walletCheck
 } from "./util";
 
-if (!process.env.WALLET_FILE) {
-    console.log("⛔ ERROR: Please specify a wallet file to load using argument " +
-        "'--wallet-file <PATH>'.");
-    process.exit();
-}
-
-const arweavePort = process.env.ARWEAVE_PORT ? process.env.ARWEAVE_PORT : 443;
-const arweaveHost = process.env.ARWEAVE_HOST ? process.env.ARWEAVE_HOST : "arweave.net";
-const arweaveProtocol = process.env.ARWEAVE_PROTOCOL ? process.env.ARWEAVE_PROTOCOL : "https";
-
-const rawWallet = fs.readFileSync(path.join(__dirname, process.env.WALLET_FILE), { encoding: "utf-8" });
-const wallet = JSON.parse(rawWallet);
-
-const arweave = Arweave.init({
-    host: arweaveHost,
-    port: arweavePort,
-    protocol: arweaveProtocol
-});
-
-const dispatchTx = (tx: any) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const anchorId = await arweave.api.get("/tx_anchor").then((x: any) => x.data);
-            tx.last_tx = anchorId;
-
-            await arweave.transactions.sign(tx, wallet);
-            const res = await arweave.transactions.post(tx);
-
-            resolve(res);
-        } catch (err) {
-            reject(err);
-        }
-    });
-};
+walletCheck();
 
 const app: Express = express();
 const port: number = 5000;
@@ -122,20 +89,21 @@ app.post("/url/extract/submit", async (req: Request, res: Response, next: NextFu
 
         const metadata = await extractMeta(rawHtml, url);
         data.title = metadata.title ? metadata.title : await getTitle(rawHtml);
-        data.metaTags = generateMetatags(metadata);
+        data.metaTags = await generateMetatags(metadata);
         data.titleTag = getTitleTag(rawHtml);
 
-        const finalContent = data.titleTag + data.metaTags + data.content;
+        let finalContent = data.titleTag + data.metaTags + data.content;
+        finalContent = await replaceImages(finalContent);
         const sentimentScore = sentimentAnalysis(text.content);
 
-        const tx = await arweave.createTransaction({ data: finalContent }, wallet);
+        const tx = await ar.createTransaction(finalContent);
 
         if (data.title) { tx.addTag("Title", data.title); }
 
         tx.addTag("Original URL", url);
         tx.addTag("Sentiment Score", sentimentScore);
 
-        await dispatchTx(tx);
+        await ar.dispatchTx(tx);
 
         res.send({
             txId: tx.id
