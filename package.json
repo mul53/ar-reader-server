@@ -23,7 +23,7 @@
     "errorhandler": "^1.5.1",
     "express": "^4.17.1",
     "html-to-text": "^5.1.1",
-    "jsdom": "^15.2.1",
+    "jsdom": "^16.5.0",
     "metascraper": "^5.9.4",
     "metascraper-date": "^5.8.13",
     "metascraper-description": "^5.8.15",
